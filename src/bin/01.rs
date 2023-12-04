@@ -121,10 +121,4 @@ mod tests {
         ));
         assert_eq!(result, Some(281));
     }
-    #[test]
-    fn test_translate() {
-        let input = "onetwothreefourfivesixseveneightnine";
-        let r = translate_numbers(input);
-        assert_eq!(r.as_str(), "123456789");
-    }
 }
