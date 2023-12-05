@@ -1,5 +1,4 @@
 advent_of_code::solution!(2);
-use anyhow::{Error, Result};
 use std::iter::Sum;
 use std::ops::Add;
 
@@ -48,7 +47,7 @@ pub fn part_one(input: &str) -> Option<u32> {
     };
     let lines = input.trim_end().split('\n');
     let games = lines
-        .map(|l| parse_line(l).unwrap())
+        .map(|l| parse_line(l))
         .filter(|g| g.is_valid(max))
         .map(|g| g.num as u32)
         .sum();
@@ -58,7 +57,7 @@ pub fn part_one(input: &str) -> Option<u32> {
 pub fn part_two(input: &str) -> Option<u32> {
     let lines = input.trim_end().split('\n');
     let sum = lines
-        .map(|l| parse_line(l).unwrap())
+        .map(|l| parse_line(l))
         .map(|game| {
             let max_red = game.sets.iter().map(|s| s.red).max().unwrap();
             let max_green = game.sets.iter().map(|s| s.green).max().unwrap();
@@ -70,19 +69,20 @@ pub fn part_two(input: &str) -> Option<u32> {
     Some(sum)
 }
 
-fn parse_line(line: &str) -> Result<Game> {
+fn parse_line(line: &str) -> Game {
     let mut pieces = line.split(':');
     let num: u8 = pieces
         .next()
-        .ok_or(Error::msg("Invalid data on : split"))?
+        .unwrap()
         .split(' ')
         .skip(1)
         .next()
-        .ok_or(Error::msg("Invalid data ' ' split"))?
-        .parse()?;
-    let game_details = pieces.next().ok_or(Error::msg("Invalid data"))?;
+        .unwrap()
+        .parse()
+        .unwrap();
+    let game_details = pieces.next().unwrap();
     let sets = parse_details(game_details);
-    Ok(Game { num, sets })
+    Game { num, sets }
 }
 
 fn parse_details(details: &str) -> Vec<Set> {
