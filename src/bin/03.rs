@@ -197,7 +197,7 @@ impl fmt::Debug for Engine {
 
 pub fn part_one(input: &str) -> Option<u32> {
     let engine = Engine::parse(input);
-    println!("Engine: {:?}", engine);
+    // println!("Engine: {:?}", engine);
     // let value = engine.map.get(&(0, 2)).unwrap();
     // let check = engine.adjacent((0, 2));
     // let has_symbol = engine.has_symbol((0, 2));
@@ -211,9 +211,9 @@ pub fn part_one(input: &str) -> Option<u32> {
         for col in 0..engine.cols {
             let loc = (row, col);
             let el = engine.map.get(&loc).unwrap();
-            if el.is_part() {
-                println!("Checking around part {el:?}");
-            }
+            // if el.is_part() {
+            //     println!("Checking around part {el:?}");
+            // }
             if el.is_part() && current_part.as_ref() != Some(el) {
                 added_part = false;
                 if engine.has_symbol(loc) && el.is_part() {
@@ -227,7 +227,7 @@ pub fn part_one(input: &str) -> Option<u32> {
             }
         }
     }
-    println!("Parts: {valid_parts:?}");
+    // println!("Parts: {valid_parts:?}");
     Some(valid_parts.into_iter().filter_map(|p| p.part()).sum())
 }
 
