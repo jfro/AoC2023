@@ -66,6 +66,9 @@ impl Element {
     pub fn is_part(&self) -> bool {
         matches!(self, Self::Part(_))
     }
+    pub fn is_gear(&self) -> bool {
+        matches!(self, Self::Char('*'))
+    }
     pub fn digit(&self) -> Option<char> {
         match self {
             Self::Char(c) if self.is_digit() => Some(*c),
@@ -197,11 +200,6 @@ impl fmt::Debug for Engine {
 
 pub fn part_one(input: &str) -> Option<u32> {
     let engine = Engine::parse(input);
-    // println!("Engine: {:?}", engine);
-    // let value = engine.map.get(&(0, 2)).unwrap();
-    // let check = engine.adjacent((0, 2));
-    // let has_symbol = engine.has_symbol((0, 2));
-    // println!("{value:?} neighbors: {check:?} - {has_symbol}");
     // TODO: make iterator?
     let mut valid_parts = Vec::new();
     // let mut possible_parts = Vec::new();
@@ -211,9 +209,6 @@ pub fn part_one(input: &str) -> Option<u32> {
         for col in 0..engine.cols {
             let loc = (row, col);
             let el = engine.map.get(&loc).unwrap();
-            // if el.is_part() {
-            //     println!("Checking around part {el:?}");
-            // }
             if el.is_part() && current_part.as_ref() != Some(el) {
                 added_part = false;
                 if engine.has_symbol(loc) && el.is_part() {
@@ -227,12 +222,33 @@ pub fn part_one(input: &str) -> Option<u32> {
             }
         }
     }
-    // println!("Parts: {valid_parts:?}");
     Some(valid_parts.into_iter().filter_map(|p| p.part()).sum())
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    None
+    let engine = Engine::parse(input);
+    let gear_powers = engine
+        .map
+        .iter()
+        .filter_map(|(loc, el)| {
+            if el.is_gear() {
+                // check if there's exactly 2 parts nearby
+                let mut adj: Vec<u32> = engine
+                    .adjacent(*loc)
+                    .into_iter()
+                    .filter(|e| e.is_part())
+                    .filter_map(|e| e.part())
+                    .collect();
+                adj.dedup(); // problematic?
+                if adj.len() == 2 {
+                    let power = adj.iter().fold(1u32, |power, el| el * power);
+                    return Some(power);
+                }
+            }
+            None
+        })
+        .sum();
+    Some(gear_powers)
 }
 
 #[cfg(test)]
@@ -248,6 +264,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(467835));
     }
 }
