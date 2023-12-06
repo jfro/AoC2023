@@ -88,7 +88,7 @@ fn parse(input: &str) -> Vec<Race> {
 }
 pub fn part_one(input: &str) -> Option<u32> {
     let races = parse(input);
-    println!("Races: {races:?}");
+    // println!("Races: {races:?}");
     let mut total = 1;
     for race in races {
         let wins = race.possible_wins();
