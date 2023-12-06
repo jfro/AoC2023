@@ -1,24 +1,9 @@
+use rayon::prelude::*;
 use std::collections::HashMap;
 use std::ops::Range;
 use std::str::FromStr;
+
 advent_of_code::solution!(5);
-
-// pub struct Seed(pub u64);
-// pub struct Soil(pub u32);
-// pub struct Fertilizer(pub u32);
-// pub struct Water(pub u32);
-// pub struct Light(pub u32);
-// pub struct Temperature(pub u32);
-// pub struct Humidity(pub u32);
-// pub struct Location(pub u32);
-
-// pub type SeedToSoil = HashMap<Seed, Soil>;
-// pub type SoilToFertilizer = HashMap<Soil, Fertilizer>;
-// pub type FertilizerToWater = HashMap<Fertilizer, Water>;
-// pub type WaterToLight = HashMap<Water, Light>;
-// pub type LightToTemperature = HashMap<Light, Temperature>;
-// pub type TemperatureToHumidity = HashMap<Temperature, Humidity>;
-// pub type HumidityToLocation = HashMap<Humidity, Location>;
 
 #[derive(Debug, Hash, Eq, PartialEq, Copy, Clone)]
 pub enum MapType {
@@ -162,6 +147,7 @@ pub fn part_one(input: &str) -> Option<u64> {
 }
 
 pub fn part_two(input: &str) -> Option<u64> {
+    // answer: 28580589
     let data = Data::parse(input);
     let seeds: Vec<u64> = data
         .seeds
@@ -169,8 +155,8 @@ pub fn part_two(input: &str) -> Option<u64> {
         .flat_map(|chunk| (chunk[0]..(chunk[0] + chunk[1])).collect::<Vec<u64>>())
         .collect();
     let lowest = seeds
-        .into_iter()
-        .map(|s| sequence(s, MapType::all(), &data.maps))
+        .par_iter()
+        .map(|s| sequence(*s, MapType::all(), &data.maps))
         .min()
         .unwrap();
     Some(lowest)
