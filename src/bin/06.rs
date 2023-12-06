@@ -2,11 +2,11 @@ advent_of_code::solution!(6);
 
 // Charge time: 1mm per 1ms
 #[derive(Debug, Copy, Clone)]
-struct Time(u32); // ms
+struct Time(u64); // ms
 #[derive(Debug, Copy, Clone)]
-struct Speed(u32); // mm per ms
+struct Speed(u64); // mm per ms
 #[derive(Debug, Copy, Clone)]
-struct Distance(u32); // mm
+struct Distance(u64); // mm
 impl Time {
     pub fn charge_to_speed(&self) -> Speed {
         // since it's 1mm per 1ms of charge, speed is same as time, just diff units
@@ -26,7 +26,7 @@ struct Race {
     time: Time,
 }
 impl Race {
-    pub fn new(record: u32, time: u32) -> Self {
+    pub fn new(record: u64, time: u64) -> Self {
         Race {
             record: Distance(record),
             time: Time(time),
@@ -46,6 +46,13 @@ impl Race {
             })
             .collect()
     }
+    pub fn possible_wins(&self) -> usize {
+        self.attempts()
+            .into_iter()
+            .map(|a| a.distance())
+            .filter(|a| a.0 > self.record.0)
+            .count()
+    }
 }
 /// Describes an attempt split between how long charge & how long for travel
 #[derive(Debug)]
@@ -62,12 +69,12 @@ impl RaceAttempt {
     }
 }
 
-fn parse_numbers(line: &str) -> Vec<u32> {
+fn parse_numbers(line: &str) -> Vec<u64> {
     let colon = line.find(':').unwrap();
     (&line[colon..])
         .trim()
         .split(' ')
-        .filter_map(|n| n.parse::<u32>().ok())
+        .filter_map(|n| n.parse::<u64>().ok())
         .collect()
 }
 fn parse(input: &str) -> Vec<Race> {
@@ -84,20 +91,40 @@ pub fn part_one(input: &str) -> Option<u32> {
     println!("Races: {races:?}");
     let mut total = 1;
     for race in races {
-        let wins = race
-            .attempts()
-            .into_iter()
-            .map(|a| a.distance())
-            .filter(|a| a.0 > race.record.0)
-            .count();
-        println!("Wins: {wins}");
+        let wins = race.possible_wins();
         total *= wins;
     }
     Some(total as _)
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
-    None
+pub fn part_two(input: &str) -> Option<u64> {
+    let input = input.replace(' ', "");
+    let mut lines = input.lines();
+    let time = lines
+        .next()
+        .unwrap()
+        .split(':')
+        .nth(1)
+        .unwrap()
+        .parse::<u64>()
+        .unwrap();
+    let distance = lines
+        .next()
+        .unwrap()
+        .split(':')
+        .nth(1)
+        .unwrap()
+        .parse::<u64>()
+        .unwrap();
+
+    let race = Race {
+        record: Distance(distance),
+        time: Time(time),
+    };
+    let wins = race.possible_wins();
+
+    // println!("s: {time:?} {distance:?}");
+    Some(wins as _)
 }
 
 #[cfg(test)]
@@ -113,6 +140,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(71503));
     }
 }
