@@ -3,7 +3,7 @@ use std::ops::Range;
 use std::str::FromStr;
 advent_of_code::solution!(5);
 
-pub struct Seed(pub u64);
+// pub struct Seed(pub u64);
 // pub struct Soil(pub u32);
 // pub struct Fertilizer(pub u32);
 // pub struct Water(pub u32);
@@ -59,11 +59,11 @@ impl FromStr for MapType {
         }
     }
 }
-pub type MapLookup = HashMap<MapType, SectionMap>;
+type MapLookup = HashMap<MapType, SectionMap>;
 
 #[derive(Debug)]
 struct SectionMap {
-    name: String,
+    _name: String,
     maps: Vec<SeedMap>,
 }
 impl SectionMap {
@@ -80,7 +80,7 @@ impl SectionMap {
 #[derive(Debug)]
 struct SeedMap {
     source: Range<u64>,
-    destination: Range<u64>,
+    offset: i64,
 }
 impl SeedMap {
     fn parse(line: &str) -> Self {
@@ -88,22 +88,25 @@ impl SeedMap {
         let dest_start = nums.next().unwrap();
         let source_start = nums.next().unwrap();
         let range_len = nums.next().unwrap();
+        let offset = source_start as i64 - dest_start as i64;
         Self {
             source: source_start..(source_start + range_len),
-            destination: dest_start..(dest_start + range_len),
+            offset,
         }
     }
     fn map(&self, value: u64) -> Option<u64> {
-        let index = self.source.clone().position(|s| s == value)?;
-        self.destination.clone().nth(index)
+        if !self.source.contains(&value) {
+            return None;
+        }
+        Some((value as i64 - self.offset) as u64)
     }
 }
 
-fn parse_seeds(line: &str) -> Vec<Seed> {
+fn parse_seeds(line: &str) -> Vec<u64> {
     (&line[6..])
         .trim()
         .split(' ')
-        .map(|n| Seed(n.parse::<u64>().unwrap()))
+        .map(|n| n.parse::<u64>().unwrap())
         .collect()
 }
 fn parse_section(section: &str) -> (MapType, SectionMap) {
@@ -115,7 +118,7 @@ fn parse_section(section: &str) -> (MapType, SectionMap) {
     let maps = lines.map(|l| SeedMap::parse(l)).collect();
     let map_type = MapType::from_str(section_name).unwrap();
     let section = SectionMap {
-        name: section_name.to_string(),
+        _name: section_name.to_string(),
         maps,
     };
     // println!("Section: {section:?}");
@@ -125,33 +128,52 @@ fn sequence(start: u64, seq: &[MapType], lookup: &MapLookup) -> u64 {
     seq.iter().fold(start, |val, map_type| {
         let map = lookup.get(map_type).unwrap();
         let r = map.map(val);
-        println!("{map_type:?} {val} => {r}");
+        // println!("{map_type:?} {val} => {r}");
         r
     })
 }
-pub fn part_one(input: &str) -> Option<u64> {
-    let mut sections = input.trim_end().split("\n\n");
-    let seeds = parse_seeds(sections.next().unwrap());
-    let mut section_lookup = MapLookup::new();
-    for section in sections {
-        let (map_type, section) = parse_section(section);
-        section_lookup.insert(map_type, section);
+struct Data {
+    seeds: Vec<u64>,
+    maps: MapLookup,
+}
+impl Data {
+    fn parse(input: &str) -> Self {
+        let mut sections = input.trim_end().split("\n\n");
+        let seeds = parse_seeds(sections.next().unwrap());
+        let mut maps = MapLookup::new();
+        for section in sections {
+            let (map_type, section) = parse_section(section);
+            maps.insert(map_type, section);
+        }
+        Self { seeds, maps }
     }
-    // let soil = section_lookup.get(&MapType::SeedToSoil).unwrap();
-    // let r = soil.map(79);
-    // println!("79 -> {r}");
-    let lowest = seeds
+}
+
+pub fn part_one(input: &str) -> Option<u64> {
+    // answer: 240320250
+    let data = Data::parse(input);
+    let lowest = data
+        .seeds
         .into_iter()
-        .map(|s| sequence(s.0, MapType::all(), &section_lookup))
+        .map(|s| sequence(s, MapType::all(), &data.maps))
         .min()
         .unwrap();
-    // let result = sequence(79, MapType::all(), &section_lookup);
-    // println!("Result: {result}");
     Some(lowest)
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
-    None
+pub fn part_two(input: &str) -> Option<u64> {
+    let data = Data::parse(input);
+    let seeds: Vec<u64> = data
+        .seeds
+        .chunks(2)
+        .flat_map(|chunk| (chunk[0]..(chunk[0] + chunk[1])).collect::<Vec<u64>>())
+        .collect();
+    let lowest = seeds
+        .into_iter()
+        .map(|s| sequence(s, MapType::all(), &data.maps))
+        .min()
+        .unwrap();
+    Some(lowest)
 }
 
 #[cfg(test)]
@@ -167,6 +189,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(46));
     }
 }
